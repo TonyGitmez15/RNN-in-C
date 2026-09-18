@@ -29,11 +29,11 @@ void matrix_fill_zeros(Matrix *M){
 void matrix_fill_randomXavier(Matrix *M, size_t inputs, size_t outputs){
     //Corroborar structs inizializados.
     if(M == NULL){
-        printf("%s","Error al inicializar struct de matriz M. Error 1 en función matrix_fill_randomXavier" );
+        printf("%s","Error al inicializar struct de matriz M. Error: init.c en función matrix_fill_randomXavier" );
         return;
     }
     if(M->data == NULL){
-        printf("%s","Error al inicializar datos de la matriz M. Error 2 en función matrix_fill_randomXavier");
+        printf("%s","Error al inicializar datos de la matriz M. Error init.c en función matrix_fill_randomXavier");
         return;
     } 
     for(size_t i = 0; i < M->row; i++){

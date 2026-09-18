@@ -73,3 +73,71 @@ void rnn_free(RNN *net){
         matrix_free(list_matrix[i]);
     }
 }
+//--------------------------------------------------------------------------
+//Funcion de activacion Elliot f(x) = x / (1 + |x|)
+void activationF_Elliott(Matrix *m) {
+    if (m == NULL || m->data == NULL){
+        LOG_ERROR("Error en función de activación Elliot en matriz %p.", m);
+        return;
+    }
+    size_t total_elementos = m->row * m->col;
+    for (size_t i = 0; i < total_elementos; i++) {
+        // fabsf() pertenece a <math.h> para precisión float (32 bits)
+        m->data[i] = m->data[i] / (1.0f + fabsf(m->data[i]));
+    }
+}
+//--------------------------------------------------------------------------
+//Funcion para obtener estado oculto h_t = act(W_xh*x_t + W_hh*h_t1 + b_h).
+bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,
+             const vector *x_t, const vector *b_h, vector *out_h_t,
+             vector *aux1, vector *aux2, vector *aux3){
+    if(!matrix_mult(W_xh, x_t, aux1)){
+        LOG_ERROR("Error al multiplicar matriz %p con %p.", W_xh, x_t);
+        return false;
+    }
+    if(!matrix_mult(W_hh, h_t1, aux2)){
+        LOG_ERROR("Error al multiplicar matriz %s con %s.", W_hh, h_t1);
+        return false;
+    }
+    if(!matrix_sum(aux1,aux2, aux3)){
+        LOG_ERROR("Error al sumar multiplicacion de matrices: %p * %p + %p * %p.", W_xh, x_t, W_hh, h_t1);
+        return false;
+    }
+    if(!matrix_sum(aux3, b_h, out_h_t)){
+        LOG_ERROR("Error al sumar %p + %p.", aux3, b_h);
+        return false;
+    }
+    activationF_Elliott(out_h_t);
+    return true;
+}
+//Funcion que calulca el vector de salida y_t = W_hy*h_t + b_y
+bool rnn_y_t(const Matrix *W_hy, const vector *h_t, const vector *b_y, vector *y_t,
+             vector *a){
+    if(!matrix_mult(W_hy, h_t, a)){
+        LOG_ERROR("Fallo en multiplicación matriz %p con vector %p.", W_hy, h_t);
+        return false;
+    }
+    if(!matrix_sum(a, b_y, y_t)){
+        LOG_ERROR("Fallo en suma de %p con vector %p.", a, b_y);
+        return false;
+    }
+    return true;
+}
+//--------------------------------------------------------------------------
+//Funcion para obtener los estados de salida h_t y y_t.
+void rnn_forward(RNN *net){
+    if(!rnn_h_t(&(net->parameters.W_xh), &(net->parameters.W_hh),
+                &(net->states.h_t_1), &(net->states.x_t),
+                &(net->parameters.b_h), &(net->states.h_t),
+                &(net->auxs.aux1), &(net->auxs.aux2), &(net->auxs.aux3))){
+        LOG_ERROR("Error al calcular h_t.");
+        return;
+    }
+    if(!rnn_y_t(&(net->parameters.W_hy), &(net->states.h_t), &(net->parameters.b_y),
+                &(net->states.y_t), &(net->auxs.aux_out))){
+        LOG_ERROR("Error al calcular y_t.");
+        return;
+    }
+    matrix_copy(&(net->states.h_t_1), &(net->states.h_t));
+    LOG_INFO("Actualizacion de estado oculto para t-1 excitoso y calculo de y_t.");
+}

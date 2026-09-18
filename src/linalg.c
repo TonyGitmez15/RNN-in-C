@@ -1,4 +1,6 @@
 #include "linalg.h"
+#include "logs.h"
+#include <string.h>
 //Reservar (Construir) espacio de memoria para el puntero de la estructura Matrix.
 bool matrix_init(Matrix *m, size_t rows, size_t cols){
     m->data = malloc(rows * cols *sizeof(float));   //Reservar espacio del tamaño de la matriz por el tipo de dato.
@@ -49,4 +51,20 @@ bool matrix_mult(const Matrix *a, const Matrix *b, Matrix *out){
         }
     }
     return true;
+}
+void matrix_copy(Matrix *dest, const Matrix *src){
+    if(dest == NULL || dest->data == NULL || src == NULL || src->data == NULL){
+        LOG_ERROR("Fallo en la copia de %p a %p", src, dest);
+        return;
+    }
+    //Calulo de elementos a copiar.
+    size_t num_elements = src->col * src->row;
+    //Sintaxis: puntero destino, puntero origen, tamaño total en bytes
+    if(dest->row == src->row && dest->col == src->col){
+        LOG_ERROR("Dimensiones incorrectas\n %p, columnas: %zu y filas: %zu, \n%p, columnas: %zu y filas: %zu",
+                                            dest, dest->col, dest->row, src, src->col, src->row);
+        return;
+    }
+    memcpy(dest->data, src->data, num_elements * sizeof(float));
+    LOG_INFO("Paso de estado oculto %p a %p", src, dest);
 }
