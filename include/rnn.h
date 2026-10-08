@@ -44,7 +44,7 @@ typedef struct rnn{
 //Estructura para manipular secuencias de manera general controlando su tipo de dato, la cantidad de instantes de 
 //tiempo que maneja y la longitud de cada uno de los datos en cada instante de tiempo t.
 typedef struct sequence_t{
-    vector data_seq;;       //Permite guardar arreglos de T filas y D columnas en arreglos de 1D.
+    vector data_seq;       //Vector que permite guardar arreglos de T filas por D columnas en arreglos de 1D.
     size_t t_max;       //Define la cantidad de T instantes de tiempo.
     size_t dim_data;    //Dimension D de cada dato para cada instante t.
 }Sequence_t;
@@ -60,5 +60,7 @@ bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,
 bool rnn_y_t(const Matrix *W_hy, const vector *h_t, const vector *b_y, vector *y_t,
              vector *aux1);
 void activationF_Elliott(Matrix *m);
-bool rnn_forward_sequence(Sequence_t *seq);
+bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net);
+bool sequence_init(Sequence_t *seq_t, size_t t, size_t dim);
+bool sequence_free(Sequence_t *seq_t);
 #endif
