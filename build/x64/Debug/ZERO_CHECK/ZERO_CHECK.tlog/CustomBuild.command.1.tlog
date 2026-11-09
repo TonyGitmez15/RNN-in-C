@@ -1,0 +1,10 @@
+^C:\USERS\USUARIO DELL\DESKTOP\RNN\RNN_C_PROJECT\BUILD\CMAKEFILES\E09B832C90A94902E7372CDE5495124C\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/USUARIO DELL/Desktop/RNN/rnn_c_project" "-BC:/Users/USUARIO DELL/Desktop/RNN/rnn_c_project/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/USUARIO DELL/Desktop/RNN/rnn_c_project/build/RNN_C_PROJECT.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

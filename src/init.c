@@ -17,7 +17,7 @@ void gen_zero(float *array, size_t num_elementos){
 //Funcion para determinar de manera dinamica el rango aleatorio en base al número de
 //entradas y salidas de la red.
 float init_XavierGlorot(size_t no_inputs, size_t n_outputs){
-    return sqrtf(6.0f) / sqrtf(no_inputs + n_outputs);
+    return sqrtf(6.0f) / sqrtf((float)no_inputs + (float)n_outputs);
 }
 //-----------------------------------------------------------------------------------------------------------------------------
 //Funcion que toma una matriz M y la rellena con ceros.

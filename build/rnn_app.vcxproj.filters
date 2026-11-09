@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\USUARIO DELL\Desktop\RNN\rnn_c_project\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\USUARIO DELL\Desktop\RNN\rnn_c_project\src\linalg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\USUARIO DELL\Desktop\RNN\rnn_c_project\src\init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\USUARIO DELL\Desktop\RNN\rnn_c_project\src\rnn.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\USUARIO DELL\Desktop\RNN\rnn_c_project\src\sequence.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\USUARIO DELL\Desktop\RNN\rnn_c_project\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{43E76231-388C-3C78-BE55-439A37727FA1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

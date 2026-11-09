@@ -1,15 +1,13 @@
 #ifndef RNN_H
 #define RNN_H
 #include "linalg.h"
+#include "sequence.h"
 
 /**
  * @brief Se definen los componentes de vectores, matrices e hiperparametros para diseñar
  * la red neuronal recurrente.
  * @file rnn.h
  */
-//Declarar alias para mejor lectura del código y diferenciar al trabajar con matrices o vectores, pues
-//su definición parte del mismo struct Matrix.
-typedef Matrix vector;
 //Se declaran matrices y vectores como miembros de la estructura, no se inicializan aparte, por ello no
 //declaran como punteros, evitando declararlos en otra parte de la memoria. Asi se reservara tambien el
 //espacio en memoria para las variables de control row, col y data de cada matriz/vector.
@@ -41,26 +39,17 @@ typedef struct rnn{
     RNN_S states;
     RNN_A auxs;
 }RNN;
-//Estructura para manipular secuencias de manera general controlando su tipo de dato, la cantidad de instantes de 
-//tiempo que maneja y la longitud de cada uno de los datos en cada instante de tiempo t.
-typedef struct sequence_t{
-    vector data_seq;       //Vector que permite guardar arreglos de T filas por D columnas en arreglos de 1D.
-    size_t t_max;       //Define la cantidad de T instantes de tiempo.
-    size_t dim_data;    //Dimension D de cada dato para cada instante t.
-}Sequence_t;
 //--------------------------------------------------------------------------------------
 //Firmas de las funciones de rnn.c
 //--------------------------------------------------------------------------------------
 bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s);
 void rnn_free(RNN *net);
 void rnn_forward(RNN *net);
+bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net);
 bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,
              const vector *x_t, const vector *b_h, vector *out_h_t,
              vector *aux1, vector *aux2, vector *aux3);
 bool rnn_y_t(const Matrix *W_hy, const vector *h_t, const vector *b_y, vector *y_t,
              vector *aux1);
 void activationF_Elliott(Matrix *m);
-bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net);
-bool sequence_init(Sequence_t *seq_t, size_t t, size_t dim);
-bool sequence_free(Sequence_t *seq_t);
 #endif

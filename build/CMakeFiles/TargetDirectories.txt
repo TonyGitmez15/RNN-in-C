@@ -1,0 +1,3 @@
+C:/Users/USUARIO DELL/Desktop/RNN/rnn_c_project/build/CMakeFiles/rnn_app.dir
+C:/Users/USUARIO DELL/Desktop/RNN/rnn_c_project/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/USUARIO DELL/Desktop/RNN/rnn_c_project/build/CMakeFiles/ZERO_CHECK.dir
