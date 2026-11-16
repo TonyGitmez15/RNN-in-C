@@ -14,7 +14,7 @@ bool sequence_free(Sequence_t *seq_t)
     seq_t->t_max = 0;
     free(&(seq_t->data_seq));
     if(&(seq_t->data_seq) == NULL){
-        LOG_INFO("Sequencuia %p liberada.", seq_t);
+        LOG_INFO("Sequencia %p liberada.", seq_t);
         return true;
     }
     LOG_ERROR("Error al liberar secuencia %p.", seq_t);
@@ -24,36 +24,38 @@ bool sequence_free(Sequence_t *seq_t)
 bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net){
     //Validar punteros nulos.
     if(X == NULL){
-        LOG_ERROR("Error con secuencia %p = NULL.",X);
+        LOG_ERROR("Error con secuencia X = NULL.");
         return false;
     }
     if( H == NULL){
-        LOG_ERROR("Error con secuencia %p = NULL.",H);
+        LOG_ERROR("Error con secuencia H = NULL.");
         return false;
     }
     if(net == NULL){
-        LOG_ERROR("Error con red %p = NULL.",net);
+        LOG_ERROR("Error con red net = NULL.");
         return false;
     }
     //Validar dimensiones de las secuecnias X y H.
     if(X->t_max != H->t_max){
-        LOG_ERROR("Tamaño de secuencias diferentes de %p y %p", X, H);
+        LOG_ERROR("Tamaño de secuencias diferentes de X y H");
         return false;
     }
     //Validar dimensiones desde entrada en las secuencias de entrada y estado oculto con las matrices de pesos.
     if(X->dim_data != net->parameters.W_xh.col)
     {
-        LOG_ERROR("Error en dimensiones de secuencia %p y numero de columnas en W_xh.", X);
+        LOG_ERROR("Error en dimensiones de secuencia X con dim_data = %zu y numero de columnas W_xh = %zu", X->dim_data, net->parameters.W_xh.col);
         return false;
     }
     if(H->dim_data != net->parameters.W_hh.col){
-        LOG_ERROR("Error en dimensiones de secuencia %p y numero de columnas en W_hh", H);
+        LOG_ERROR("Error en dimensiones de secuencia H con dim_data = %zu y numero de columnas W_hh = %zu", H->dim_data, net->parameters.W_hh.col);
         return false;
     }
     //Resguardar puntero original de los datos de la secuencia de estados ocultos h_t.
     float *h_t_backup = net->states.h_t.data;
     //Inicializamos las dimensiones de entrada del vector de entrada x(t).
     matrix_init(&(net->states.x_t), X->dim_data, 1);
+    //Inicializamos las dimensiones de entrada del vector de estados ocultos h(t).
+    matrix_init(&(net->states.h_t), H->dim_data, 1);
 
     //Bucle para recorrer todos los instantes de tiempo t a T-1 en X.
     for(size_t t = 0; t < X->t_max; t++){

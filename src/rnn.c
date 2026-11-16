@@ -50,9 +50,14 @@ bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
     }
     matrix_fill_zeros(list_vector[1]);
     LOG_INFO("Procesamiento exitoso de %zu inputs, %zu hidden, %zu outputs en rnn.", input_s, hidden_s, output_s);
+    LOG_INFO("Inicialización de matriz W_xh con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicialización de matriz W_hh con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicialización de matriz W_hy con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicialización de vector b_h con dimensiones [%zu, 1]", hidden_s);
+    LOG_INFO("Inicialización de vector b_y con dimensiones [%zu, 1]", output_s);
     return true;
 }
-//-----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
 //Función para liberar espacio en memoria de la rnn.
 void rnn_free(RNN *net){
     //Lista de punteros a cada matriz y vector para ser recorrida en ciclo for.
