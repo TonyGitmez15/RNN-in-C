@@ -1,4 +1,5 @@
 #include "init.h"
+#include "logs.h"
 //-----------------------------------------------------------------------------------------------------------------------------
 //Funcion para generar de manera aleatoria un numero tipo float.
 float gen_float(size_t inputs, size_t outputs){
@@ -42,4 +43,29 @@ void matrix_fill_randomXavier(Matrix *M, size_t inputs, size_t outputs){
             M->data[index] = gen_float(inputs, outputs);
         }
     }
+}
+//Funcion para inicializar ventanas x_t y h_t.
+bool window_init(Matrix *m, size_t rows, size_t cols){
+    m->data = NULL;
+    m->row = rows;
+    m->col = cols;
+    return true;
+}
+//Funcion para copiar una matriz hacia otra. Se utiliza al pasar el estado oculto actual h_t a h_t1.
+bool matrix_copy(Matrix *dest, const Matrix *src){
+    if(dest == NULL || dest->data == NULL || src == NULL || src->data == NULL){
+        LOG_ERROR("Fallo en la copia de h_t1 a h_t");
+        return false;
+    }
+    //Calulo de elementos a copiar.
+    size_t num_elements = src->col * src->row;
+    //Sintaxis: puntero destino, puntero origen, tamaño total en bytes
+    if(dest->row != src->row || dest->col != src->col){
+        LOG_ERROR("\nDimensiones incorrectas h_t[%zu, %zu], h_t1[%zu, %zu]",
+                                            src->row, src->col, dest->row, dest->col);
+        return false;
+    }
+    memcpy(dest->data, src->data, num_elements * sizeof(float));
+    LOG_INFO("Paso de estado oculto h_t a h_t1");
+    return true;
 }

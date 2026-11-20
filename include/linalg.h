@@ -18,5 +18,4 @@ bool matrix_init(Matrix *m, size_t rows, size_t cols);
 void matrix_free(Matrix *m);
 bool matrix_sum(const Matrix *a, const Matrix *b, Matrix *out);
 bool matrix_mult(const Matrix *a, const Matrix *b, Matrix *out);
-
 #endif

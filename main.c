@@ -37,19 +37,20 @@ int main(void){
     } 
     //4. Ejecutar Forward Pass, procesamiento de la secuencia en un solo bloque.
     if(!rnn_forward_sequence(&X, &H, &net)){
-        LOG_ERROR("Error al pasar secuencia de entrada.");
+        LOG_ERROR("Error al pasar secuencias hacia la red.");
+        return -1;
     }
     else{
-        LOG_INFO("Secuencia procesada con excito.");
-        printf("___________________ Resultados del FORWARD PASS ___________________");
+        LOG_INFO("Secuencias procesada con excito.");
+        printf("___________________ Resultados del FORWARD PASS ___________________\n");
     }
     printf(" t | Input x[t] | Hidden h[t][0] | Output y[t][0]\n");
-    printf("---------------------------------------------------");
+    printf("---------------------------------------------------\n");
     for(size_t t = 0; t < CONFIG_TIME_STEPS; t++){
         float x_val = X.data_seq.data[t * CONFIG_INPUT_SIZE];
         float h_val = H.data_seq.data[t * CONFIG_HIDDEN_SIZE]; // Primera neurona oculta
         float y_val = net.states.y_t.data[0]; // Salida actual
-        printf("%2zu | %10.4f | %20.4f | %14.4f\\n", t, x_val, h_val, y_val); }
+        printf("%2zu | %10.4f | %20.4f | %14.4f\n", t, x_val, h_val, y_val); }
     printf("------------------------------------------------------\n\n");
     //5. Revisión de resultados y liberación de memoria.
     sequence_free(&X);

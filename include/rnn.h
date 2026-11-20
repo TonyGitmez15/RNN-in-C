@@ -31,7 +31,7 @@ typedef struct rnn_aux{
     vector aux1;    //Vector auxiliar para multiplicaciones de vectores.
     vector aux2;    //Vector auxiliar para multiplicaciones de vectores.
     vector aux3;    //Vector auxiliar para suma de vectores.
-    vector aux_out;
+    vector aux_out; //Vector auxiliar para calcular y_t.
 }RNN_A;
 //Unificación de estados y parametros para su acceso en entrenamiento o inferencia.
 typedef struct rnn{
@@ -44,7 +44,7 @@ typedef struct rnn{
 //--------------------------------------------------------------------------------------
 bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s);
 void rnn_free(RNN *net);
-void rnn_forward(RNN *net);
+bool rnn_forward(RNN *net);
 bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net);
 bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,
              const vector *x_t, const vector *b_h, vector *out_h_t,

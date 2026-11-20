@@ -5,9 +5,9 @@
  * @file config.h
  */
 //Geometria de la red neuronal.
-#define CONFIG_INPUT_SIZE 1
-#define CONFIG_OUTPUT_SIZE 1
-#define CONFIG_HIDDEN_SIZE 4
+#define CONFIG_INPUT_SIZE 1     //Dimension de entrada, numero de caracteristicas en cada vector x(t).
+#define CONFIG_OUTPUT_SIZE 1    //Dimension de salida, numero de valores a predecir en y_hat(t).
+#define CONFIG_HIDDEN_SIZE 4    //Dimension oculta, nuemero de neuronas (cantidad de memoria) de la capa recurrente.
 //Parametros de la secuencia temporal.
 #define CONFIG_TIME_STEPS 10
 #define CONFIG_DELTA_T 0.1f

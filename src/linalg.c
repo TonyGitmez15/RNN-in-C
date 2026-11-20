@@ -35,8 +35,15 @@ bool matrix_sum(const Matrix *a, const Matrix *b, Matrix *out){
 //Funcion que revisa la correcta multiplicacion de 2 matrices, tal que a y b satisfagan la condiion
 // p*n y n*q para que sean multiplicables.
 bool matrix_mult(const Matrix *a, const Matrix *b, Matrix *out){
-    if(a == NULL || b == NULL || out == NULL) return false; //Corroborar structs inizializados.
-    if(a->col != b->row || a->row != out->row || b->col != out->col) return false;  //Corroborar dimensiones de a y b para producto punto.
+    if(a == NULL || b == NULL || out == NULL){
+        LOG_ERROR("Error al inicalizar matrices en multiplicacion, A = %p, B = %p y C = %p", a, b, out);
+        return false; //Corroborar structs inizializados.
+    } 
+    if(a->col != b->row || a->row != out->row || b->col != out->col){
+        LOG_ERROR("Error en las dimensiones de matrices A[%zu, %zu], B[%zu, %zu] y OUT[%zu, %zu]", 
+            a->row, a->col, b->row, b->col, out->row, out->col);
+        return false;  //Corroborar dimensiones de a y b para producto punto.
+    }
     if(out->data == NULL || a->data == NULL || b->data == NULL) return false;   //Corroborar datos en strcuts.
     size_t index_out = 0;
     for(size_t i = 0; i < a->row; i++){
@@ -51,20 +58,4 @@ bool matrix_mult(const Matrix *a, const Matrix *b, Matrix *out){
         }
     }
     return true;
-}
-void matrix_copy(Matrix *dest, const Matrix *src){
-    if(dest == NULL || dest->data == NULL || src == NULL || src->data == NULL){
-        LOG_ERROR("Fallo en la copia de %p a %p", src, dest);
-        return;
-    }
-    //Calulo de elementos a copiar.
-    size_t num_elements = src->col * src->row;
-    //Sintaxis: puntero destino, puntero origen, tamaño total en bytes
-    if(dest->row == src->row && dest->col == src->col){
-        LOG_ERROR("Dimensiones incorrectas\n %p, columnas: %zu y filas: %zu, \n%p, columnas: %zu y filas: %zu",
-                                            dest, dest->col, dest->row, src, src->col, src->row);
-        return;
-    }
-    memcpy(dest->data, src->data, num_elements * sizeof(float));
-    LOG_INFO("Paso de estado oculto %p a %p", src, dest);
 }

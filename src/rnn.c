@@ -1,6 +1,7 @@
 #include "rnn.h"
 #include "init.h"
 #include "logs.h"
+#include "linalg.h"
 //Funcion de inicialización de red donde se reserva memoria para cada matriz y vector;
 //además se inicializan con valores aleatrios o ceros.
 bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
@@ -13,26 +14,41 @@ bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
         &(net->parameters.b_h),
         &(net->parameters.b_y)
     };
-    if(!matrix_init(list_matrix[0], hidden_s, hidden_s)){ //W_hh
+    Matrix* list_states[] = {
+        &(net->states.x_t),
+        &(net->states.y_t),
+        &(net->states.h_t),
+        &(net->states.h_t_1)
+    };
+    Matrix* list_aux[] = {
+        &(net->auxs.aux1),
+        &(net->auxs.aux2),
+        &(net->auxs.aux3),
+        &(net->auxs.aux_out)
+    };
+    //Inicializacion de matriz W_hh con dimensiones [h_s, h_s].
+    if(!matrix_init(list_matrix[0], hidden_s, hidden_s)){ 
         LOG_ERROR("Fallo al inicializar matriz de pesos ocultos W_hh.");
         return false;
     }
     matrix_fill_randomXavier(list_matrix[0], hidden_s, hidden_s);    //Asignar valores aleatorios de inicio a los pesos.
-    if(!matrix_init(list_matrix[1], hidden_s, output_s)){ //W_hy
+    //Inicializacion de matriz W_hy con dimensiones [h_s, o_s].
+    if(!matrix_init(list_matrix[1], hidden_s, output_s)){ 
         matrix_free(list_matrix[0]);
         LOG_ERROR("Fallo al inicializar matriz de pesos de salida W_hy.");
         return false;
     }
     matrix_fill_randomXavier(list_matrix[1], hidden_s, output_s);
-    if(!matrix_init(list_matrix[2], input_s, hidden_s)){ //W_xh
+    //Inicializacion de matriz W_xh con dimensiones [i_s, h_s].
+    if(!matrix_init(list_matrix[2], input_s, hidden_s)){ 
         matrix_free(list_matrix[0]);
         matrix_free(list_matrix[1]);
         LOG_ERROR("Fallo al inicializar matriz de pesos de entrada W_xh.");
         return false;
     }
     matrix_fill_randomXavier(list_matrix[2], input_s, hidden_s);
-
-    if(!matrix_init(list_vector[0], hidden_s, 1)){//b_h
+    //Inicializacion de vector de sesgos b_h, dimensiones [1, h_s].
+    if(!matrix_init(list_vector[0], 1, hidden_s)){
         matrix_free(list_matrix[0]);
         matrix_free(list_matrix[1]);
         matrix_free(list_matrix[2]);
@@ -40,7 +56,8 @@ bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
         return false;
     }
     matrix_fill_zeros(list_vector[0]);    //Asignar valores en ceros.
-    if(!matrix_init(list_vector[1], output_s, 1)){//b_y
+    //Inicializacion de vector de sesgos b_y, dimensiones [o_s, 1].
+    if(!matrix_init(list_vector[1], output_s, 1)){
         matrix_free(list_matrix[0]);
         matrix_free(list_matrix[1]);
         matrix_free(list_matrix[2]);
@@ -49,12 +66,130 @@ bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
         return false;
     }
     matrix_fill_zeros(list_vector[1]);
+    //Inicializacion de x_t.
+    if(!window_init(list_states[0], input_s, 1)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        LOG_ERROR("Fallo al inicializar vector de caracteristicas de entrada por instante de tiempo x_t.");
+        return false;
+    }
+    //Inicializacion de y_t.
+    if(!matrix_init(list_states[1], output_s, 1)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[0]);
+        LOG_ERROR("Fallo al inicializar vector de prediccion por instante de tiempo y_t.");
+        return false;
+    }
+    //Inicializacion de h_t.
+    if(!window_init(list_states[2], 1, hidden_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        LOG_ERROR("Fallo al inicializar vector de nuevo estado oculto por instante de tiempo h_t.");
+        return false;
+    }
+    //Inicializacion de h_t_1.
+    if(!matrix_init(list_states[3], 1, hidden_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        LOG_ERROR("Fallo al inicializar vector de estado oculto previo por instante de tiempo h_t_1.");
+        return false;
+    }
+    //Inicializacion aux1,guarda x_t*W_xh, dimensiones [i_s, h_s], x_t{1,1}*W_xh{1,4}=aux1{1,4}.
+    if(!matrix_init(list_aux[0], input_s, hidden_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        matrix_free(list_states[3]);
+        LOG_ERROR("Fallo al inicializar matriz aux1.");
+        return false;
+    }
+    //Inicialización aux2, guarda W_hh*h_t1, dimensiones [i_s, h_s].
+    if(!matrix_init(list_aux[1], input_s, hidden_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        matrix_free(list_states[3]);
+        matrix_free(list_aux[0]);
+        LOG_ERROR("Fallo al inicializar matriz aux2.");
+    }
+    //Inicializacion aux3, guarda x_t*W_xh + W_hh*h_t1, dimensiones [i_s, h_s].
+    if(!matrix_init(list_aux[2], input_s, hidden_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        matrix_free(list_states[3]);
+        matrix_free(list_aux[0]);
+        matrix_free(list_aux[1]);
+        LOG_ERROR("Fallo al inicializar matriz aux3.");
+    }
+    //Inicializacion aux_out, guarda y_t = h_t * W_hy, dimensiones [h_s, o_s].
+    if(!matrix_init(list_aux[3], input_s, output_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        matrix_free(list_states[3]);
+        matrix_free(list_aux[0]);
+        matrix_free(list_aux[1]);
+        matrix_free(list_aux[2]);
+        LOG_ERROR("Fallo al inicializar matriz aux_out.");
+    }
+    //Inicializacion a, guarda h_t * W_hy, dimensiones [h_s, i_s]
+    /*if(!matrix_init(list_aux[4],hidden_s, output_s)){
+        matrix_free(list_matrix[0]);
+        matrix_free(list_matrix[1]);
+        matrix_free(list_matrix[2]);
+        matrix_free(list_vector[0]);
+        matrix_free(list_vector[1]);
+        matrix_free(list_states[1]);
+        matrix_free(list_states[3]);
+        matrix_free(list_aux[0]);
+        matrix_free(list_aux[1]);
+        matrix_free(list_aux[2]);
+        matrix_free(list_aux[3]);
+        LOG_ERROR("Fallo al inicializar a.");
+    }*/
     LOG_INFO("Procesamiento exitoso de %zu inputs, %zu hidden, %zu outputs en rnn.", input_s, hidden_s, output_s);
-    LOG_INFO("Inicialización de matriz W_xh con dimensiones [%zu, %zu]", input_s, hidden_s);
-    LOG_INFO("Inicialización de matriz W_hh con dimensiones [%zu, %zu]", input_s, hidden_s);
-    LOG_INFO("Inicialización de matriz W_hy con dimensiones [%zu, %zu]", input_s, hidden_s);
-    LOG_INFO("Inicialización de vector b_h con dimensiones [%zu, 1]", hidden_s);
-    LOG_INFO("Inicialización de vector b_y con dimensiones [%zu, 1]", output_s);
+    LOG_INFO("Inicializacion de matriz W_xh con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicializacion de matriz W_hh con dimensiones [%zu, %zu]", hidden_s, hidden_s);
+    LOG_INFO("Inicializacion de matriz W_hy con dimensiones [%zu, %zu]", hidden_s, output_s);
+    LOG_INFO("Inicializacion de vector aux1 con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicializacion de vector aux2 con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicializacion de vector aux3 con dimensiones [%zu, %zu]", input_s, hidden_s);
+    LOG_INFO("Inicializacion de vector aux_out con dimensiones [%zu, %zu]", input_s, hidden_s);
+    //LOG_INFO("Inicializacion de vector a con dimensiones [%zu, %zu]", hidden_s, output_s);
+    LOG_INFO("Inicializacion de vector b_h con dimensiones [%zu, 1]", hidden_s);
+    LOG_INFO("Inicializacion de vector b_y con dimensiones [%zu, 1]", output_s);
+    LOG_INFO("Inicializacion de vector x_t con dimensiones [%zu, 1]", input_s);
+    LOG_INFO("Inicializacion de vector y_t con dimensiones [%zu, 1]", output_s);
+    LOG_INFO("Inicializacion de vector h_t con dimensiones [%zu, 1]", hidden_s);
+    LOG_INFO("Inicializacion de vector h_t_1 con dimensiones [%zu, 1]", hidden_s);
     return true;
 }
 //----------------------------------------------------------------------------------------------------------------
@@ -96,21 +231,24 @@ void activationF_Elliott(Matrix *m) {
 bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,
              const vector *x_t, const vector *b_h, vector *out_h_t,
              vector *aux1, vector *aux2, vector *aux3){
-    if(!matrix_mult(W_xh, x_t, aux1)){
-        LOG_ERROR("Error al multiplicar matriz %p con %p.", (void*)&W_xh, (void*)&x_t);
-        LOG_INFO("Dimensiones de %p: [%zu, %zu], dimensiones de %p: [%zu, %zu]", (void*)&W_xh, W_xh->col, W_xh->row, (void*)&x_t, x_t->col, x_t->row);
+    if(!matrix_mult(x_t, W_xh, aux1)){
+        LOG_ERROR("Error al multiplicar vector x_t con matriz W_xh. Dimensiones de x_t: [%zu, %zu], dimensiones de W_xh: [%zu, %zu]",
+            x_t->row, x_t->col, W_xh->row, W_xh->col);
         return false;
     }
-    if(!matrix_mult(W_hh, h_t1, aux2)){
-        LOG_ERROR("Error al multiplicar matriz %p con %p.", (void*)&W_hh, (void*)&h_t1);
+    if(!matrix_mult(h_t1, W_hh, aux2)){
+        LOG_ERROR("Error al multiplicar matriz W_hh con vector h_t1. Dimensiones de W_hh: [%zu, %zu], dimensiones de h_t1: [%zu, %zu]",
+            W_hh->row, W_hh->col, h_t1->row, h_t1->col);
         return false;
     }
     if(!matrix_sum(aux1,aux2, aux3)){
-        LOG_ERROR("Error al sumar multiplicacion de matrices: %p * %p + %p * %p.", (void*)&W_xh, (void*)&x_t, (void*)&W_hh, (void*)&h_t1);
+        LOG_ERROR("Error al sumar multiplicacion W_hh*h_t1 + x_t*W_xh. Dimensiones de W_hh*h_t1: [%zu, %zu], dimensiones de x_t*W_xh: [%zu, %zu]",
+            aux1->row, aux1->col, aux2->row, aux2->col);
         return false;
     }
     if(!matrix_sum(aux3, b_h, out_h_t)){
-        LOG_ERROR("Error al sumar %p + %p.", (void*)&aux3, (void*)&b_h);
+        LOG_ERROR("Error al sumar aux3 + b_h. Dimensiones de aux3: [%zu, %zu], dimensiones de b_h: [%zu, %zu]",
+            aux3->row, aux3->col, b_h->row, b_h->col);
         return false;
     }
     activationF_Elliott(out_h_t);
@@ -119,32 +257,38 @@ bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,
 //Funcion que calulca el vector de salida y_t = W_hy*h_t + b_y
 bool rnn_y_t(const Matrix *W_hy, const vector *h_t, const vector *b_y, vector *y_t,
              vector *a){
-    if(!matrix_mult(W_hy, h_t, a)){
-        LOG_ERROR("Fallo en multiplicación matriz %p con vector %p.", (void*)&W_hy, (void*)&h_t);
+    if(!matrix_mult(h_t, W_hy, a)){
+        LOG_ERROR("Fallo en multiplicación a = b_y*W_hy. Dimensiones de b_y: [%zu, %zu], dimensiones de W_hy: [%zu, %zu]",
+            h_t->row, h_t->col, W_hy->row, W_hy->col);
         return false;
     }
     if(!matrix_sum(a, b_y, y_t)){
-        LOG_ERROR("Fallo en suma de %p con vector %p.", (void*)&a, (void*)&b_y);
+        LOG_ERROR("Fallo en suma y_t = a + b_y. Dimensiones de a: [%zu, %zu], dimensiones de b_y: [%zu, %zu]",
+            a->row, a->col, b_y->row, b_y->col);
         return false;
     }
     return true;
 }
 //--------------------------------------------------------------------------
 //Funcion para obtener los estados de salida h_t y y_t, tambien actualiza el valor de h_{t-1} con h_{t}.
-void rnn_forward(RNN *net){
+bool rnn_forward(RNN *net){
     if(!rnn_h_t(&(net->parameters.W_xh), &(net->parameters.W_hh),
                 &(net->states.h_t_1), &(net->states.x_t),
                 &(net->parameters.b_h), &(net->states.h_t),
                 &(net->auxs.aux1), &(net->auxs.aux2), &(net->auxs.aux3))){
         LOG_ERROR("Error al calcular h_t.");
-        return;
+        return false;
     }
     if(!rnn_y_t(&(net->parameters.W_hy), &(net->states.h_t), &(net->parameters.b_y),
                 &(net->states.y_t), &(net->auxs.aux_out))){
         LOG_ERROR("Error al calcular y_t.");
-        return;
+        return false;
     }
-    matrix_copy(&(net->states.h_t_1), &(net->states.h_t));
+    if(!matrix_copy(&(net->states.h_t_1), &(net->states.h_t))){
+        LOG_ERROR("Fallo en el paso de h_t a h_t1.");
+        return false;
+    }
     LOG_INFO("Actualizacion de estado oculto para t-1 excitoso y calculo de y_t.");
+    return true;
 }
 //Funcion para inicializar en memoria secuencias con t valores y cada valor t de dimension dim.

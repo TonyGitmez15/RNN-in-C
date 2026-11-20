@@ -16,5 +16,6 @@ float gen_float(size_t inputs, size_t outputs);
 float init_XavierGlorot(size_t no_input, size_t n_outputs);
 void matrix_fill_zeros(Matrix *M);
 void matrix_fill_randomXavier(Matrix *M, size_t inputs, size_t outputs);
-void matrix_copy(Matrix *dest, const Matrix *src);
+bool matrix_copy(Matrix *dest, const Matrix *src);
+bool window_init(Matrix *m, size_t rows, size_t cols);
 #endif

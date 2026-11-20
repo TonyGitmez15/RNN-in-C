@@ -40,23 +40,9 @@ bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net){
         LOG_ERROR("Tamaño de secuencias diferentes de X y H");
         return false;
     }
-    //Validar dimensiones desde entrada en las secuencias de entrada y estado oculto con las matrices de pesos.
-    if(X->dim_data != net->parameters.W_xh.col)
-    {
-        LOG_ERROR("Error en dimensiones de secuencia X con dim_data = %zu y numero de columnas W_xh = %zu", X->dim_data, net->parameters.W_xh.col);
-        return false;
-    }
-    if(H->dim_data != net->parameters.W_hh.col){
-        LOG_ERROR("Error en dimensiones de secuencia H con dim_data = %zu y numero de columnas W_hh = %zu", H->dim_data, net->parameters.W_hh.col);
-        return false;
-    }
     //Resguardar puntero original de los datos de la secuencia de estados ocultos h_t.
     float *h_t_backup = net->states.h_t.data;
-    //Inicializamos las dimensiones de entrada del vector de entrada x(t).
-    matrix_init(&(net->states.x_t), X->dim_data, 1);
-    //Inicializamos las dimensiones de entrada del vector de estados ocultos h(t).
-    matrix_init(&(net->states.h_t), H->dim_data, 1);
-
+    float *x_t_backup = net->states.x_t.data;
     //Bucle para recorrer todos los instantes de tiempo t a T-1 en X.
     for(size_t t = 0; t < X->t_max; t++){
         //Primero redireccionar la entrada x_t. Pasamos el dato de la secuencia X en la posición de 
@@ -67,10 +53,14 @@ bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net){
         //t por la longitud de cada dato; pasandose a data de h_t de la red. Esto actualiza la entrada h_t en la red para cada instante t.
         net->states.h_t.data = &(H->data_seq.data[t * H->dim_data]);
         //Con x_t y h_t actualizados ejecutamos las operaciones de algebra lineal de la RNN.
-        rnn_forward(net);
+        if(!rnn_forward(net)){
+            LOG_ERROR("Fallo en calculo de red.");
+            return false;
+        }
     }
     //Regresamos el puntero del estado oculto h_t a la dirección original.
     net->states.h_t.data = h_t_backup;
+    net->states.x_t.data = x_t_backup;
     LOG_INFO("Secuencia de %zu pasos de timepo t procesados correctamente.", X->t_max);
     return true;
 }
