@@ -53,10 +53,14 @@ int main(void){
         printf("%2zu | %10.4f | %20.4f | %14.4f\n", t, x_val, h_val, y_val); }
     printf("------------------------------------------------------\n\n");
     //5. Revisión de resultados y liberación de memoria.
-    sequence_free(&X);
-    sequence_free(&H);
-    rnn_free(&net);
-
+    if(!rnn_free(&net)){
+        LOG_ERROR("Error al liberar memoria de matrices y vectores liberados correctamente en la red.");
+    };
+    LOG_INFO("Memoria de la red liberada correctamente.");
+    if(!sequence_NULL(&X, &H)){
+        LOG_ERROR("Error en liberar memoria de secuencias.");
+    }
+    LOG_INFO("Memoria de las secuencias X y H liberadas correctamente.");
     LOG_INFO("Memoria liberada. Prueba finalizada con éxito.");
     return 0;
 }

@@ -43,7 +43,7 @@ typedef struct rnn{
 //Firmas de las funciones de rnn.c
 //--------------------------------------------------------------------------------------
 bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s);
-void rnn_free(RNN *net);
+bool rnn_free(RNN *net);
 bool rnn_forward(RNN *net);
 bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net);
 bool rnn_h_t(const Matrix *W_xh, const Matrix *W_hh, const vector *h_t1,

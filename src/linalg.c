@@ -11,10 +11,13 @@ bool matrix_init(Matrix *m, size_t rows, size_t cols){
 }
 //Liberar manualmente el espacio de memoria para el puntero a la estructura Matrix.
 void matrix_free(Matrix *m){
-    if(m->data != NULL){
-        free(m->data);
-        m->data = NULL;
+    if(m == NULL || m->data == NULL){
+        LOG_INFO("El puntero %p ya esta libre.", (void*)m->data);
+        return;
     }
+    LOG_INFO("Intentando liberar memoria en puntero: %p", (void*)m->data);
+    free(m->data);
+    m->data = NULL;
     m->col = 0;
     m->row = 0;
 }

@@ -183,7 +183,6 @@ bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
     LOG_INFO("Inicializacion de vector aux2 con dimensiones [%zu, %zu]", input_s, hidden_s);
     LOG_INFO("Inicializacion de vector aux3 con dimensiones [%zu, %zu]", input_s, hidden_s);
     LOG_INFO("Inicializacion de vector aux_out con dimensiones [%zu, %zu]", input_s, hidden_s);
-    //LOG_INFO("Inicializacion de vector a con dimensiones [%zu, %zu]", hidden_s, output_s);
     LOG_INFO("Inicializacion de vector b_h con dimensiones [%zu, 1]", hidden_s);
     LOG_INFO("Inicializacion de vector b_y con dimensiones [%zu, 1]", output_s);
     LOG_INFO("Inicializacion de vector x_t con dimensiones [%zu, 1]", input_s);
@@ -194,7 +193,7 @@ bool rnn_init(RNN *net, size_t input_s, size_t hidden_s, size_t output_s){
 }
 //----------------------------------------------------------------------------------------------------------------
 //Función para liberar espacio en memoria de la rnn.
-void rnn_free(RNN *net){
+bool rnn_free(RNN *net){
     //Lista de punteros a cada matriz y vector para ser recorrida en ciclo for.
     Matrix* list_matrix[] = {
         &(net->parameters.b_h),
@@ -202,16 +201,21 @@ void rnn_free(RNN *net){
         &(net->parameters.W_hh),
         &(net->parameters.W_hy),
         &(net->parameters.W_xh),
-        &(net->states.h_t),
+        //&(net->states.h_t),
         &(net->states.h_t_1),
-        &(net->states.x_t),
-        &(net->states.y_t)
+        //&(net->states.x_t),
+        &(net->states.y_t),
+        &(net->auxs.aux1),
+        &(net->auxs.aux2),
+        &(net->auxs.aux3),
+        &(net->auxs.aux_out)
     };
     //Tamañano de la lista de arriba.
     size_t num_elementos = sizeof(list_matrix)/sizeof(list_matrix[0]);
     for(size_t i = 0; i < num_elementos; i++){
         matrix_free(list_matrix[i]);
     }
+    return true;
 }
 //--------------------------------------------------------------------------
 //Funcion de activacion Elliot f(x) = x / (1 + |x|)
@@ -291,4 +295,45 @@ bool rnn_forward(RNN *net){
     LOG_INFO("Actualizacion de estado oculto para t-1 excitoso y calculo de y_t.");
     return true;
 }
-//Funcion para inicializar en memoria secuencias con t valores y cada valor t de dimension dim.
+//Funcion para inicializar secuencia de entrada X y secuencia de estados ocultos H.
+bool rnn_forward_sequence(Sequence_t *X, Sequence_t *H, RNN *net){
+    //Validar punteros nulos.
+    if(X == NULL){
+        LOG_ERROR("Error con secuencia X = NULL.");
+        return false;
+    }
+    if( H == NULL){
+        LOG_ERROR("Error con secuencia H = NULL.");
+        return false;
+    }
+    if(net == NULL){
+        LOG_ERROR("Error con red net = NULL.");
+        return false;
+    }
+    //Validar dimensiones de las secuecnias X y H.
+    if(X->t_max != H->t_max){
+        LOG_ERROR("Tamaño de secuencias diferentes de X y H");
+        return false;
+    }
+    //Bucle para recorrer todos los instantes de tiempo t a T-1 en X.
+    for(size_t t = 0; t < X->t_max; t++){
+        //Primero redireccionar la entrada x_t. Pasamos el dato de la secuencia X en la posición de 
+        //tiempo actual t multiplicada por la longitud de cada dato en la secuencia X; pasandolo a 
+        //data de x_t de la red. Esto actualiza la entrada x_t en la red para cada instante t.
+        net->states.x_t.data = &(X->data_seq.data[t * X->dim_data]);
+        //Hacemos lo mismo para el estado oculto h_t. Se pasa el dato de H en el instante de tiempo
+        //t por la longitud de cada dato; pasandose a data de h_t de la red. Esto actualiza la entrada h_t en la red para cada instante t.
+        net->states.h_t.data = &(H->data_seq.data[t * H->dim_data]);
+        //Con x_t y h_t actualizados ejecutamos las operaciones de algebra lineal de la RNN.
+        if(!rnn_forward(net)){
+            LOG_ERROR("Fallo en calculo de red.");
+            return false;
+        }
+    }
+    //Regresamos el puntero de h_t y x_t a su valor previo a las asignaciones de X y H, este valor
+    //se asigno en window_init(), desde rnn.c dentro de la funcion rnn_init().
+    net->states.h_t.data = NULL;
+    net->states.x_t.data = NULL;
+    LOG_INFO("Secuencia de %zu pasos de timepo t procesados correctamente.", X->t_max);
+    return true;
+}

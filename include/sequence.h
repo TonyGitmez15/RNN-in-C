@@ -15,5 +15,6 @@ typedef struct sequence_t{
     size_t dim_data;    //Dimension D de cada dato para cada instante t.
 }Sequence_t;
 bool sequence_init(Sequence_t *seq_t, size_t t, size_t dim);
-bool sequence_free(Sequence_t *seq_t);
+void sequence_free(Sequence_t *seq_t);
+bool sequence_NULL(Sequence_t *X, Sequence_t *H);
 #endif
